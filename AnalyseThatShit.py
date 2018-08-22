@@ -34,16 +34,19 @@ sourceIP3 = {}
 sourceIPs = {}
 destinationIPs = {}
 countries = {}
+logs = []
 
 #Set current working directory
 dir_name = os.getcwd()
 os.chdir(dir_name)
 
 #Prints the first n items of a list
-def firstN(l, n):
+def firstN(l, n, debug=False):
     count = 0
     while count < n:
-        print(l[count])
+        if debug:
+            print(l[count])
+        yield l[count]
         count = count + 1
 
 #Finds all .zip files within the directory and sub-directories and extracts these
@@ -84,11 +87,19 @@ def Remove(df):
         os.remove(f)
     print("All gone")
 
+#Write out logs
+def StoreAnalysisLogs(logs):
+    for log in logs:
+        print("Stroing "+log[0])
+        with open(log[0]+".log", 'w') as outfile:
+            for line in log[1]:
+                outfile.write(str(line)+'\n')
+
 #Analyses all files in the dataFiles list
 #Frequency analysis of the following: Source IPs, Countries of origin, and most frequently seen IPs by network class
 def AnalyseFiles(df):
     for f in df:
-        print("Analysis of: "+f.split("/")[-1])
+        print("Analysing "+f.split("/")[-2]+"_"+f.split("/")[-1])
         with open(f, 'r') as csvfile:
 
             reader = csv.reader(csvfile, delimiter='\n', quotechar='|')
@@ -134,44 +145,51 @@ def AnalyseFiles(df):
                     except:
                         pass
 
-        #Print Source IPs
+        analysis = []
+
+        #Source IPs
         s = [(p, sourceIPs[p]) for p in sorted(sourceIPs, key=sourceIPs.get, reverse=True)]
-        print("Source IPs")
-        firstN(s,30)
-        print("")
+        analysis.append("Source IPs")
+        [analysis.append(x) for x in firstN(s,30)]
+        analysis.append("")
 
-        #Print Countries
+        #Countries
         s = [(p, countries[p]) for p in sorted(countries, key=countries.get, reverse=True)]
-        print("Country of Origin")
-        firstN(s,30)
-        print("")
+        analysis.append("Country of Origin")
+        [analysis.append(x) for x in firstN(s,30)]
+        analysis.append("")
 
-        #Print Class A Octect results
+        #Class A Octect results
         s = [(p, sourceIP0[p]) for p in sorted(sourceIP0, key=sourceIP0.get, reverse=True)]
-        print("Class A range")
+        analysis.append("Class A range")
+        [analysis.append(x) for x in firstN(s,30)]
+        analysis.append("")
         firstN(s,30)
-        print("")
 
-        #Print Class B Octect results
+        #Class B Octect results
         s = [(p, sourceIP1[p]) for p in sorted(sourceIP1, key=sourceIP1.get, reverse=True)]
-        print("Class B range")
+        analysis.append("Class B range")
+        [analysis.append(x) for x in firstN(s,30)]
+        analysis.append("")
         firstN(s,30)
-        print("")
 
-        #Print Class C Octect results
+        #Class C Octect results
         s = [(p, sourceIP2[p]) for p in sorted(sourceIP2, key=sourceIP2.get, reverse=True)]
-        print("Class C range")
+        analysis.append("Class C range")
+        [analysis.append(x) for x in firstN(s,30)]
+        analysis.append("")
         firstN(s,30)
-        print("")
 
-        #Print Class D Octect results
+        #Class D Octect results
         s = [(p, sourceIP3[p]) for p in sorted(sourceIP3, key=sourceIP3.get, reverse=True)]
-        print("Class D range")
+        analysis.append("Class D range")
+        [analysis.append(x) for x in firstN(s,30)]
+        analysis.append("")
         firstN(s,30)
-        print("")
 
-        print(" ---")
+        logs.append((f.split("/")[-2]+"_"+f.split("/")[-1][:-4], analysis))
 
 #Lets go!
 FindZipsAndExtract(dir_name)
 AnalyseFiles(dataFiles)
+StoreAnalysisLogs(logs)
