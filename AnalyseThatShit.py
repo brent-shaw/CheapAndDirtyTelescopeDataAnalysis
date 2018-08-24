@@ -20,6 +20,7 @@ import csv
 import time
 from collections import Counter
 import os, zipfile
+import matplotlib.pyplot as plt
 
 # import git
 # cwd = os.getcwd()
@@ -34,6 +35,7 @@ sourceIP3 = {}
 sourceIPs = {}
 destinationIPs = {}
 countries = {}
+delays = {}
 logs = []
 
 #Set current working directory
@@ -100,11 +102,15 @@ def StoreAnalysisLogs(logs):
 def AnalyseFiles(df):
     for f in df:
         print("Analysing "+f.split("/")[-2]+"_"+f.split("/")[-1])
+        tdel = []
+        count = 0
         with open(f, 'r') as csvfile:
-
             reader = csv.reader(csvfile, delimiter='\n', quotechar='|')
+            last = 0
+            filename = f.split("/")[-2]+"_"+f.split("/")[-1][:-4]
+
             for row in reader:
-                if "time_stamp" in row:
+                if "time_stamp" in row[0]:
                     pass
                 else:
                     parts = row[0].split(',')
@@ -112,38 +118,55 @@ def AnalyseFiles(df):
 
                     #This builds the frequency analysis dictionaries
                     #Long and slow :)
-                    try:
-                        if parts[6] in sourceIPs:
-                            sourceIPs[parts[6]] += 1
-                        else:
-                            sourceIPs[parts[6]] = 1
+                    tparts = parts[0].split(".")
 
-                        if octets[0] in sourceIP0:
-                            sourceIP0[octets[0]] += 1
-                        else:
-                            sourceIP0[octets[0]] = 1
+                    seconds = tparts[0]
+                    mills = tparts[1]+'000'
+                    timestamp = int(seconds+mills[:3])
 
-                        if octets[1] in sourceIP1:
-                            sourceIP1[octets[1]] += 1
-                        else:
-                            sourceIP1[octets[1]] = 1
+                    if last == 0:
+                        last = timestamp
+                    else:
+                        delay = timestamp - last
+                        last = timestamp
 
-                        if octets[2] in sourceIP2:
-                            sourceIP2[octets[2]] += 1
+                        if delay <= 20000 and delay >= 0:
+                            tdel.append(delay)
+                            count+=1
+                        if delay in delays:
+                            delays[delay] += 1
                         else:
-                            sourceIP2[octets[2]] = 1
+                            delays[delay] = 1
 
-                        if octets[3] in sourceIP3:
-                            sourceIP3[octets[3]] += 1
-                        else:
-                            sourceIP3[octets[3]] = 1
+                    if parts[6] in sourceIPs:
+                        sourceIPs[parts[6]] += 1
+                    else:
+                        sourceIPs[parts[6]] = 1
 
-                        if parts[31] in countries:
-                            countries[parts[31]] += 1
-                        else:
-                            countries[parts[31]] = 1
-                    except:
-                        pass
+                    if octets[0] in sourceIP0:
+                        sourceIP0[octets[0]] += 1
+                    else:
+                        sourceIP0[octets[0]] = 1
+
+                    if octets[1] in sourceIP1:
+                        sourceIP1[octets[1]] += 1
+                    else:
+                        sourceIP1[octets[1]] = 1
+
+                    if octets[2] in sourceIP2:
+                        sourceIP2[octets[2]] += 1
+                    else:
+                        sourceIP2[octets[2]] = 1
+
+                    if octets[3] in sourceIP3:
+                        sourceIP3[octets[3]] += 1
+                    else:
+                        sourceIP3[octets[3]] = 1
+
+                    if parts[31] in countries:
+                        countries[parts[31]] += 1
+                    else:
+                        countries[parts[31]] = 1
 
         analysis = []
 
@@ -164,30 +187,40 @@ def AnalyseFiles(df):
         analysis.append("Class A range")
         [analysis.append(x) for x in firstN(s,30)]
         analysis.append("")
-        firstN(s,30)
 
         #Class B Octect results
         s = [(p, sourceIP1[p]) for p in sorted(sourceIP1, key=sourceIP1.get, reverse=True)]
         analysis.append("Class B range")
         [analysis.append(x) for x in firstN(s,30)]
         analysis.append("")
-        firstN(s,30)
 
         #Class C Octect results
         s = [(p, sourceIP2[p]) for p in sorted(sourceIP2, key=sourceIP2.get, reverse=True)]
         analysis.append("Class C range")
         [analysis.append(x) for x in firstN(s,30)]
         analysis.append("")
-        firstN(s,30)
 
         #Class D Octect results
         s = [(p, sourceIP3[p]) for p in sorted(sourceIP3, key=sourceIP3.get, reverse=True)]
         analysis.append("Class D range")
         [analysis.append(x) for x in firstN(s,30)]
         analysis.append("")
-        firstN(s,30)
 
-        logs.append((f.split("/")[-2]+"_"+f.split("/")[-1][:-4], analysis))
+        #Delay results
+        s = [(p, delays[p]) for p in sorted(delays, key=delays.get, reverse=True)]
+        analysis.append("Delays")
+        [analysis.append(x) for x in firstN(s,30)]
+        analysis.append("")
+
+        #Plot packt delays
+        plt.figure(figsize=(21,9),dpi=80)
+        plt.plot(tdel, linewidth=0.1)
+        plt.ylabel('Delay')
+        plt.title(filename)
+        plt.savefig(filename+'.png')
+
+        #Log analysis
+        logs.append((filename, analysis))
 
 #Lets go!
 FindZipsAndExtract(dir_name)
