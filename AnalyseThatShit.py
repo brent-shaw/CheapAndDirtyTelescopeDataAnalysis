@@ -113,7 +113,7 @@ def AnalyseFiles(df):
                     #This builds the frequency analysis dictionaries
                     #Long and slow :)
                     try:
-                        if parts[0] in sourceIPs:
+                        if parts[6] in sourceIPs:
                             sourceIPs[parts[6]] += 1
                         else:
                             sourceIPs[parts[6]] = 1
