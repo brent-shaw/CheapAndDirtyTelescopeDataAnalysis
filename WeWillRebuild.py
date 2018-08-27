@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""AnalyseThatShit.py: Provides rudimentary analysis of telescope data."""
+"""WeWillRebuild.py: Reordering data from network telescope repo."""
 
 """
 Obtain the data by cloning: https://github.com/zeroklone/network-telescope-data.git
@@ -24,21 +24,8 @@ import matplotlib
 matplotlib.use("agg")
 import matplotlib.pyplot as plt
 
-# import git
-# cwd = os.getcwd()
-# git.Git(cwd).clone("https://github.com/zeroklone/network-telescope-data.git")
-
 #Global nonsense
 dataFiles = []
-sourceIP0 = {}
-sourceIP1 = {}
-sourceIP2 = {}
-sourceIP3 = {}
-sourceIPs = {}
-destinationIPs = {}
-countries = {}
-delays = {}
-logs = []
 
 #Set current working directory
 dir_name = os.getcwd()
@@ -73,34 +60,11 @@ def FindZipsAndExtract(dir):
 
     print("")
 
-#OLD
-#Finds all .csv files within the directory and sub-directories and adds to the dataFiles list
-def FindCSVs(dir):
-    for root, dirs, files in os.walk(dir_name):
-        for file in files:
-            if file.endswith(".csv"):
-                path = root.split(os.sep)
-                file_path = "/".join(path)+"/"
-                print("Found: "+file_path+file)
-                dataFiles.append(file_path+file)
-    print("")
-
-#Removes all files listed in the dataFiles list
-def Remove(df):
-    for f in df:
-        os.remove(f)
-    print("All gone")
-
-#Write out logs
-def StoreAnalysisLogs(logs):
-    for log in logs:
-        print("Stroing "+log[0])
-        with open(log[0]+".log", 'w') as outfile:
-            for line in log[1]:
-                outfile.write(str(line)+'\n')
-
-#Analyses all files in the dataFiles list
-#Frequency analysis of the following: Source IPs, Countries of origin, and most frequently seen IPs by network class
+#Rebuild all files in the dataFiles list
+#Load data
+#Store usefull data in dict
+#Sort dict by timestamp
+#Store new csv
 def RebuildData(df):
     for f in df:
         print("Rebuilding "+f.split("/")[-2]+"_"+f.split("/")[-1])
