@@ -20,6 +20,8 @@ import csv
 import time
 from collections import Counter
 import os, zipfile
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 # import git
@@ -105,68 +107,66 @@ def AnalyseFiles(df):
         tdel = []
         count = 0
         with open(f, 'r') as csvfile:
-            reader = csv.reader(csvfile, delimiter='\n', quotechar='|')
+            reader = csv.DictReader(csvfile)
             last = 0
             filename = f.split("/")[-2]+"_"+f.split("/")[-1][:-4]
 
             for row in reader:
-                if "time_stamp" in row[0]:
-                    pass
+                octets = row['ip.source'].split('.')
+
+                #This builds the frequency analysis dictionaries
+                #Long and slow :)
+                ts = row['time_stamp'].split(".")
+                seconds = ts[0]
+                mills = ts[1]+'000'
+                timestamp = int(seconds+mills[:3])
+
+                if last == 0:
+                    last = timestamp
                 else:
-                    parts = row[0].split(',')
-                    octets = parts[6].split('.')
+                    delay = timestamp - last
+                    last = timestamp
 
-                    #This builds the frequency analysis dictionaries
-                    #Long and slow :)
-                    tparts = parts[0].split(".")
-
-                    seconds = tparts[0]
-                    mills = tparts[1]+'000'
-                    timestamp = int(seconds+mills[:3])
-
-                    if last == 0:
-                        last = timestamp
+                    if delay >= 0:
+                        tdel.append(delay)
+                        count+=1
                     else:
-                        delay = timestamp - last
-                        last = timestamp
-
-                        if delay <= 20000 and delay >= 0:
-                            tdel.append(delay)
-                            count+=1
-                        if delay in delays:
-                            delays[delay] += 1
-                        else:
-                            delays[delay] = 1
-
-                    if parts[6] in sourceIPs:
-                        sourceIPs[parts[6]] += 1
+                        print(row)
+                    if delay in delays:
+                        delays[delay] += 1
                     else:
-                        sourceIPs[parts[6]] = 1
+                        delays[delay] = 1
 
-                    if octets[0] in sourceIP0:
-                        sourceIP0[octets[0]] += 1
-                    else:
-                        sourceIP0[octets[0]] = 1
+                sip = row['ip.source']
+                if sip in sourceIPs:
+                    sourceIPs[sip] += 1
+                else:
+                    sourceIPs[sip] = 1
 
-                    if octets[1] in sourceIP1:
-                        sourceIP1[octets[1]] += 1
-                    else:
-                        sourceIP1[octets[1]] = 1
+                if octets[0] in sourceIP0:
+                    sourceIP0[octets[0]] += 1
+                else:
+                    sourceIP0[octets[0]] = 1
 
-                    if octets[2] in sourceIP2:
-                        sourceIP2[octets[2]] += 1
-                    else:
-                        sourceIP2[octets[2]] = 1
+                if octets[1] in sourceIP1:
+                    sourceIP1[octets[1]] += 1
+                else:
+                    sourceIP1[octets[1]] = 1
 
-                    if octets[3] in sourceIP3:
-                        sourceIP3[octets[3]] += 1
-                    else:
-                        sourceIP3[octets[3]] = 1
+                if octets[2] in sourceIP2:
+                    sourceIP2[octets[2]] += 1
+                else:
+                    sourceIP2[octets[2]] = 1
 
-                    if parts[31] in countries:
-                        countries[parts[31]] += 1
-                    else:
-                        countries[parts[31]] = 1
+                if octets[3] in sourceIP3:
+                    sourceIP3[octets[3]] += 1
+                else:
+                    sourceIP3[octets[3]] = 1
+
+                if row['country_iso'] in countries:
+                    countries[row['country_iso']] += 1
+                else:
+                    countries[row['country_iso']] = 1
 
         analysis = []
 
