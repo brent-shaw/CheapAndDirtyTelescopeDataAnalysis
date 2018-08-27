@@ -112,7 +112,7 @@ def RebuildData(df):
             reader = csv.DictReader(csvfile)
             filename = f.split("/")[-2]+"_"+f.split("/")[-1][:-4]
 
-            header = "time_stamp, ip.source, ip.destination, country_iso"
+            header = "time_stamp,ip.source,ip.destination,country_iso"
 
             for row in reader:
                 data[row['time_stamp']] = [row['ip.source'], row['ip.destination'], row['country_iso']]
